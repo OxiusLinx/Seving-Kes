@@ -21,6 +21,21 @@ npx expo start
 
 Lalu scan QR code dengan aplikasi **Expo Go** di HP (Android/iOS), atau tekan `w` untuk membuka versi web di browser.
 
+## Install di Android (APK)
+
+1. Buat akun gratis di https://expo.dev
+2. Di folder proyek:
+   ```bash
+   npm install
+   npx eas-cli@latest login
+   npx eas-cli@latest build -p android --profile preview
+   ```
+   Jawab **Yes** bila ditanya membuat project EAS atau keystore baru.
+3. Setelah build selesai (±10–20 menit), buka link/QR yang muncul di HP, unduh APK, lalu pasang
+   (izinkan "Instal aplikasi tidak dikenal" bila diminta).
+
+Saat memperbarui aplikasi, pasang APK baru di atas yang lama (jangan uninstall) agar data tidak hilang.
+
 ## Struktur
 
 ```
