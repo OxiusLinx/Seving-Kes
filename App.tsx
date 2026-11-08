@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DaySheet } from './src/components/DaySheet';
+import { BalanceSheet } from './src/components/BalanceSheet';
 import { MenuSheet } from './src/components/MenuSheet';
 import { CircleButton } from './src/components/ui';
 import { todayKey } from './src/format';
@@ -36,6 +37,7 @@ function Main() {
   const [tab, setTab] = useState<Tab>('home');
   const [openDay, setOpenDay] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [balanceOpen, setBalanceOpen] = useState(false);
   const now = new Date();
   const [ym, setYm] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const changeMonth = (year: number, month: number) => setYm({ year, month });
@@ -63,6 +65,7 @@ function Main() {
             onOpenDay={setOpenDay}
             onGoCalendar={() => setTab('calendar')}
             onGoChart={() => setTab('chart')}
+            onEditOpening={() => setBalanceOpen(true)}
           />
         ) : tab === 'calendar' ? (
           <CalendarScreen year={ym.year} month={ym.month} onChangeMonth={changeMonth} onOpenDay={setOpenDay} />
@@ -91,6 +94,7 @@ function Main() {
 
       <DaySheet date={openDay} onClose={() => setOpenDay(null)} />
       <MenuSheet visible={menuOpen} onClose={() => setMenuOpen(false)} />
+      <BalanceSheet visible={balanceOpen} onClose={() => setBalanceOpen(false)} />
     </View>
   );
 }

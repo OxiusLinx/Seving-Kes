@@ -5,10 +5,11 @@ Aplikasi mobile (React Native + Expo) untuk mencatat pendapatan harian dan melih
 ## Fitur
 
 - **Input pendapatan** — nominal (Rupiah) + tanggal + keterangan opsional. Satu hari boleh berisi banyak catatan; total harian dijumlahkan otomatis. Catatan bisa dihapus.
+- **Saldo** — kartu teratas di Beranda: saldo awal (diatur sekali) + semua pendapatan yang dicatat.
 - **Beranda** — kartu ringkasan: hari ini, minggu ini (Senin s/d hari ini), bulan ini, rata-rata per hari berpendapatan, dan hari terbaik bulan ini.
 - **Kalender bulanan** — total per tanggal (warna makin pekat = pendapatan makin besar), total akumulasi bulan, navigasi antar bulan. Ketuk tanggal untuk melihat/menambah catatan.
 - **Grafik** — grafik batang pendapatan per hari dalam satu bulan, dan total 6 bulan terakhir dengan perbandingan terhadap bulan lalu.
-- **Backup** — menu `=` untuk ekspor data ke teks JSON (bisa dibagikan) dan impor kembali.
+- **Backup** — menu `=` untuk ekspor data (termasuk saldo awal) ke teks JSON yang bisa dibagikan, dan impor kembali.
 
 Data disimpan **lokal di perangkat** (AsyncStorage), tanpa login.
 

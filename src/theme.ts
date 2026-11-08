@@ -15,6 +15,7 @@ export const colors = {
   sky: '#A6D9F3',
   brown: '#A9654A',
   brownDeep: '#8E4E3A',
+  yellow: '#F4D35E',
 };
 
 export const radius = {

@@ -9,10 +9,11 @@ type Props = {
   onOpenDay: (date: string) => void;
   onGoCalendar: () => void;
   onGoChart: () => void;
+  onEditOpening: () => void;
 };
 
-export function HomeScreen({ onOpenDay, onGoCalendar, onGoChart }: Props) {
-  const { dailyTotals, entries } = useStore();
+export function HomeScreen({ onOpenDay, onGoCalendar, onGoChart, onEditOpening }: Props) {
+  const { dailyTotals, entries, balance, openingBalance } = useStore();
   const today = todayKey();
   const now = fromKey(today);
   const year = now.getFullYear();
@@ -35,7 +36,18 @@ export function HomeScreen({ onOpenDay, onGoCalendar, onGoChart }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <SummaryCard
+        color={colors.yellow}
+        glyph="◎"
+        title="Saldo"
+        amount={balance}
+        size={80}
+        caption={openingBalance ? `Saldo awal ${rupiah(openingBalance)} + pendapatan` : 'Semua pendapatan'}
+        link={openingBalance ? 'Ubah saldo awal' : 'Atur saldo awal'}
+        onLink={onEditOpening}
+      />
+      <SummaryCard
         color={colors.mint}
+        notch="right"
         glyph="☀"
         title="Hari ini"
         amount={dailyTotals[today] ?? 0}
@@ -97,9 +109,10 @@ type SummaryProps = {
   caption: string;
   link?: string;
   onLink?: () => void;
+  size?: number;
 };
 
-function SummaryCard({ color, notch, glyph, title, amount, caption, link, onLink }: SummaryProps) {
+function SummaryCard({ color, notch, glyph, title, amount, caption, link, onLink, size = 64 }: SummaryProps) {
   return (
     <Card color={color} notch={notch}>
       <View style={styles.cardHead}>
@@ -109,12 +122,12 @@ function SummaryCard({ color, notch, glyph, title, amount, caption, link, onLink
       <View style={styles.cardBody}>
         <View style={styles.cardLeft}>
           {link && onLink ? <LinkText onPress={onLink}>{link}</LinkText> : null}
-          <Text style={styles.caption} numberOfLines={1}>
+          <Text style={styles.caption} numberOfLines={2}>
             {caption}
           </Text>
         </View>
         <View style={styles.cardRight}>
-          <BigAmount amount={amount} size={64} />
+          <BigAmount amount={amount} size={size} />
           <Text style={styles.full}>{rupiah(amount)}</Text>
         </View>
       </View>

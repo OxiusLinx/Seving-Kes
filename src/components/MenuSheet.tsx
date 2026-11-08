@@ -9,7 +9,7 @@ type Props = { visible: boolean; onClose: () => void };
 
 /** Menu: backup (ekspor) dan pulihkan (impor) data dalam format JSON. */
 export function MenuSheet({ visible, onClose }: Props) {
-  const { entries, replaceAll } = useStore();
+  const { entries, openingBalance, balance, replaceAll } = useStore();
   const [mode, setMode] = useState<'menu' | 'export' | 'import'>('menu');
   const [importText, setImportText] = useState('');
   const [message, setMessage] = useState('');
@@ -22,8 +22,7 @@ export function MenuSheet({ visible, onClose }: Props) {
     }
   }, [visible]);
 
-  const backupJson = JSON.stringify({ app: 'seving-kes', version: 1, entries }, null, 2);
-  const grandTotal = entries.reduce((s, e) => s + e.amount, 0);
+  const backupJson = JSON.stringify({ app: 'seving-kes', version: 2, openingBalance, entries }, null, 2);
 
   const share = async () => {
     try {
@@ -37,7 +36,7 @@ export function MenuSheet({ visible, onClose }: Props) {
     try {
       const parsed = parseBackup(importText);
       replaceAll(parsed);
-      setMessage(`Berhasil memulihkan ${parsed.length} catatan.`);
+      setMessage(`Berhasil memulihkan ${parsed.entries.length} catatan.`);
       setImportText('');
     } catch (err) {
       setMessage(`Gagal impor: ${(err as Error).message}`);
@@ -48,7 +47,7 @@ export function MenuSheet({ visible, onClose }: Props) {
     <Sheet visible={visible} title="Menu" color={colors.sky} onClose={onClose}>
       <ScrollView keyboardShouldPersistTaps="handled">
         <Text style={styles.meta}>
-          {entries.length} catatan · total {rupiah(grandTotal)}
+          {entries.length} catatan · saldo {rupiah(balance)}
         </Text>
 
         {mode === 'menu' && (

@@ -12,26 +12,43 @@ export type Entry = {
 };
 
 const STORAGE_KEY = 'seving-kes/entries/v1';
+const OPENING_KEY = 'seving-kes/opening-balance/v1';
 
 type Store = {
   ready: boolean;
   entries: Entry[];
   /** Total per tanggal: { 'YYYY-MM-DD': number } */
   dailyTotals: Record<string, number>;
+  /** Saldo awal: uang yang sudah ada sebelum mulai mencatat. */
+  openingBalance: number;
+  /** Saldo = saldo awal + semua pendapatan. */
+  balance: number;
+  setOpeningBalance: (amount: number) => void;
   addEntry: (e: Omit<Entry, 'id' | 'createdAt'>) => void;
   removeEntry: (id: string) => void;
   /** Mengganti seluruh data (dipakai untuk impor backup) */
-  replaceAll: (entries: Entry[]) => void;
+  replaceAll: (backup: Backup) => void;
 };
 
 const StoreContext = createContext<Store | null>(null);
 
 const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
+export type Backup = { entries: Entry[]; openingBalance?: number };
+
 /** Validasi data impor agar data rusak tidak tersimpan. */
-export function parseBackup(json: string): Entry[] {
+export function parseBackup(json: string): Backup {
   const raw = JSON.parse(json);
-  const list = Array.isArray(raw) ? raw : raw?.entries;
+  const entries = parseEntries(Array.isArray(raw) ? raw : raw?.entries);
+  if (raw && !Array.isArray(raw) && raw.openingBalance !== undefined) {
+    const opening = Number(raw.openingBalance);
+    if (!Number.isFinite(opening) || opening < 0) throw new Error('Saldo awal tidak valid');
+    return { entries, openingBalance: Math.round(opening) };
+  }
+  return { entries };
+}
+
+function parseEntries(list: unknown): Entry[] {
   if (!Array.isArray(list)) throw new Error('Format tidak dikenali');
   return list.map((e: any) => {
     if (typeof e?.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
@@ -51,15 +68,25 @@ export function parseBackup(json: string): Entry[] {
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [openingBalance, setOpening] = useState(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((json) => {
-        if (json) setEntries(parseBackup(json));
+    Promise.all([AsyncStorage.getItem(STORAGE_KEY), AsyncStorage.getItem(OPENING_KEY)])
+      .then(([json, opening]) => {
+        if (json) setEntries(parseEntries(JSON.parse(json)));
+        if (opening) setOpening(Number(opening) || 0);
       })
       .catch((err) => console.warn('Gagal memuat data', err))
       .finally(() => setReady(true));
+  }, []);
+
+  const setOpeningBalance = useCallback((amount: number) => {
+    const value = Math.max(0, Math.round(amount));
+    setOpening(value);
+    AsyncStorage.setItem(OPENING_KEY, String(value)).catch((err) =>
+      console.warn('Gagal menyimpan saldo awal', err),
+    );
   }, []);
 
   const persist = useCallback((next: Entry[]) => {
@@ -79,7 +106,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [entries, persist],
   );
 
-  const replaceAll = useCallback((next: Entry[]) => persist(next), [persist]);
+  const replaceAll = useCallback(
+    (backup: Backup) => {
+      persist(backup.entries);
+      if (backup.openingBalance !== undefined) setOpeningBalance(backup.openingBalance);
+    },
+    [persist, setOpeningBalance],
+  );
 
   const dailyTotals = useMemo(() => {
     const totals: Record<string, number> = {};
@@ -87,9 +120,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return totals;
   }, [entries]);
 
+  const balance = useMemo(
+    () => entries.reduce((sum, e) => sum + e.amount, openingBalance),
+    [entries, openingBalance],
+  );
+
   const value = useMemo(
-    () => ({ ready, entries, dailyTotals, addEntry, removeEntry, replaceAll }),
-    [ready, entries, dailyTotals, addEntry, removeEntry, replaceAll],
+    () => ({
+      ready,
+      entries,
+      dailyTotals,
+      openingBalance,
+      balance,
+      setOpeningBalance,
+      addEntry,
+      removeEntry,
+      replaceAll,
+    }),
+    [ready, entries, dailyTotals, openingBalance, balance, setOpeningBalance, addEntry, removeEntry, replaceAll],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
